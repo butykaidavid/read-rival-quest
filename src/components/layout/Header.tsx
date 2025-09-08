@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/components/ui/theme-provider';
-import { BookOpen, Moon, Sun, User, Trophy, Target, Users } from 'lucide-react';
+import { BookOpen, Moon, Sun, User, Trophy, Target, Users, TrendingUp } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,9 +13,26 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
+import { useLocation, Link } from 'react-router-dom';
+
+interface NavigationItem {
+  path: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+const navigationItems: NavigationItem[] = [
+  { path: '/', label: 'Dashboard', icon: TrendingUp },
+  { path: '/books', label: 'Books', icon: BookOpen },
+  { path: '/challenges', label: 'Challenges', icon: Trophy },
+  { path: '/leaderboards', label: 'Leaderboards', icon: Target },
+  { path: '/community', label: 'Community', icon: Users },
+];
+
 export function Header() {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
+  const location = useLocation();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -30,19 +47,19 @@ export function Header() {
           </div>
           
           {user && (
-            <nav className="hidden md:flex items-center gap-4">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <Trophy className="h-4 w-4" />
-                Leaderboards
-              </Button>
-              <Button variant="ghost" size="sm" className="gap-2">
-                <Target className="h-4 w-4" />
-                Challenges
-              </Button>
-              <Button variant="ghost" size="sm" className="gap-2">
-                <Users className="h-4 w-4" />
-                Community
-              </Button>
+            <nav className="hidden md:flex items-center gap-1">
+              {navigationItems.map(({ path, label, icon: Icon }) => (
+                <Link key={path} to={path}>
+                  <Button 
+                    variant={location.pathname === path ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className="gap-2"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Button>
+                </Link>
+              ))}
             </nav>
           )}
         </div>

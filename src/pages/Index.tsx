@@ -1,7 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { Header } from '@/components/layout/Header';
-import { Dashboard } from '@/components/dashboard/Dashboard';
+import { MainContent } from '@/components/layout/MainContent';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -33,7 +33,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <Dashboard />
+      <MainContent />
     </div>
   );
 };

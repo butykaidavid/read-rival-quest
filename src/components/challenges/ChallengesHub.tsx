@@ -1,0 +1,423 @@
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { 
+  Trophy, 
+  Users, 
+  Clock, 
+  Target, 
+  Flame,
+  BookOpen,
+  Heart,
+  Zap,
+  Star,
+  Calendar,
+  Plus,
+  Check
+} from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import Confetti from 'react-confetti';
+
+interface Challenge {
+  id: string;
+  title: string;
+  description?: string;
+  challenge_type: string;
+  target_value: number;
+  target_unit: string;
+  start_date: string;
+  end_date: string;
+  reward_points: number;
+  difficulty_level: 'easy' | 'medium' | 'hard';
+  genres: string[];
+  booktok_themed: boolean;
+  is_featured: boolean;
+  is_public: boolean;
+  max_participants?: number;
+  created_by?: string;
+  created_at: string;
+  participant_count?: number;
+  user_participation?: {
+    progress_value: number;
+    progress_percentage: number;
+    completed: boolean;
+    completion_date?: string;
+  };
+}
+
+const mockChallenges: Challenge[] = [
+  {
+    id: '1',
+    title: 'Dragon Fantasy Marathon',
+    description: 'Read 5 dragon-themed fantasy books this month. Perfect for fans of Fourth Wing and Iron Flame!',
+    challenge_type: 'books_read',
+    target_value: 5,
+    target_unit: 'books',
+    start_date: new Date().toISOString(),
+    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    reward_points: 500,
+    difficulty_level: 'hard',
+    genres: ['Fantasy', 'Dragons'],
+    booktok_themed: true,
+    is_featured: true,
+    is_public: true,
+    max_participants: 1000,
+    created_at: new Date().toISOString(),
+    participant_count: 234,
+  },
+  {
+    id: '2',
+    title: 'Romance Reading Sprint',
+    description: 'Read 1000 pages of romance novels in 30 days. Love triangles and enemies-to-lovers count double!',
+    challenge_type: 'pages_read',
+    target_value: 1000,
+    target_unit: 'pages',
+    start_date: new Date().toISOString(),
+    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    reward_points: 300,
+    difficulty_level: 'medium',
+    genres: ['Romance'],
+    booktok_themed: true,
+    is_featured: true,
+    is_public: true,
+    max_participants: 500,
+    created_at: new Date().toISOString(),
+    participant_count: 456,
+  },
+  {
+    id: '3',
+    title: 'BookTok Viral Reads',
+    description: 'Complete 3 trending BookTok books. Stay up-to-date with the latest viral reads!',
+    challenge_type: 'books_read',
+    target_value: 3,
+    target_unit: 'books',
+    start_date: new Date().toISOString(),
+    end_date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+    reward_points: 200,
+    difficulty_level: 'easy',
+    genres: ['Romance', 'Fantasy'],
+    booktok_themed: true,
+    is_featured: false,
+    is_public: true,
+    max_participants: 2000,
+    created_at: new Date().toISOString(),
+    participant_count: 789,
+  },
+  {
+    id: '4',
+    title: 'Spicy Romance Challenge',
+    description: 'Read 7 steamy romance novels. Perfect for fans of dark romance and enemies-to-lovers!',
+    challenge_type: 'books_read',
+    target_value: 7,
+    target_unit: 'books',
+    start_date: new Date().toISOString(),
+    end_date: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
+    reward_points: 400,
+    difficulty_level: 'medium',
+    genres: ['Romance'],
+    booktok_themed: true,
+    is_featured: true,
+    is_public: true,
+    created_at: new Date().toISOString(),
+    participant_count: 345,
+  }
+];
+
+export function ChallengesHub() {
+  const [filter, setFilter] = useState<'all' | 'featured' | 'romance' | 'fantasy'>('all');
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: challenges, isLoading } = useQuery({
+    queryKey: ['challenges', filter],
+    queryFn: async () => {
+      // For now, return mock data. In real app, this would fetch from Supabase
+      let filtered = mockChallenges;
+      
+      if (filter === 'featured') {
+        filtered = filtered.filter(c => c.is_featured);
+      } else if (filter === 'romance') {
+        filtered = filtered.filter(c => c.genres.includes('Romance'));
+      } else if (filter === 'fantasy') {
+        filtered = filtered.filter(c => c.genres.includes('Fantasy') || c.genres.includes('Dragons'));
+      }
+      
+      // Simulate user participation data
+      return filtered.map(challenge => ({
+        ...challenge,
+        user_participation: Math.random() > 0.7 ? {
+          progress_value: Math.floor(Math.random() * challenge.target_value),
+          progress_percentage: Math.floor(Math.random() * 100),
+          completed: Math.random() > 0.8,
+          completion_date: Math.random() > 0.8 ? new Date().toISOString() : undefined,
+        } : undefined,
+      }));
+    }
+  });
+
+  const joinChallengeMutation = useMutation({
+    mutationFn: async (challengeId: string) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      // In real app, this would call Supabase
+      const { error } = await supabase
+        .from('challenge_participants')
+        .insert({
+          user_id: user.id,
+          challenge_id: challengeId,
+          progress_value: 0,
+          progress_percentage: 0,
+          completed: false,
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 5000);
+      
+      toast({
+        title: "Challenge joined! 🎉",
+        description: "You've successfully joined the challenge. Good luck!",
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['challenges'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to join challenge",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const getDaysLeft = (endDate: string) => {
+    const end = new Date(endDate);
+    const now = new Date();
+    const diff = end.getTime() - now.getTime();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  };
+
+  const getDifficultyColor = (level: string) => {
+    switch (level) {
+      case 'easy': return 'text-success';
+      case 'medium': return 'text-warning';
+      case 'hard': return 'text-destructive';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  const getDifficultyBadgeVariant = (level: string) => {
+    switch (level) {
+      case 'easy': return 'secondary';
+      case 'medium': return 'outline';
+      case 'hard': return 'destructive';
+      default: return 'secondary';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {showConfetti && (
+        <Confetti
+          width={window.innerWidth}
+          height={window.innerHeight}
+          recycle={false}
+          numberOfPieces={200}
+        />
+      )}
+
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
+          <Trophy className="h-6 w-6 text-warning" />
+          Reading Challenges
+        </h2>
+        <p className="text-muted-foreground">
+          Compete with thousands of readers worldwide in genre-specific challenges
+        </p>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap gap-2 justify-center">
+        {[
+          { key: 'all', label: 'All Challenges', icon: Target },
+          { key: 'featured', label: 'Featured', icon: Star },
+          { key: 'romance', label: 'Romance', icon: Heart },
+          { key: 'fantasy', label: 'Fantasy', icon: Zap },
+        ].map(({ key, label, icon: Icon }) => (
+          <Button
+            key={key}
+            variant={filter === key ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter(key as any)}
+            className="gap-2"
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </Button>
+        ))}
+      </div>
+
+      {/* Challenges Grid */}
+      {isLoading ? (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading challenges...</p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {challenges?.map((challenge) => {
+            const daysLeft = getDaysLeft(challenge.end_date);
+            const isParticipating = !!challenge.user_participation;
+            const isCompleted = challenge.user_participation?.completed;
+            
+            return (
+              <Card key={challenge.id} className={`overflow-hidden ${isCompleted ? 'ring-2 ring-success' : ''}`}>
+                <CardHeader className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg line-clamp-2 flex items-center gap-2">
+                        {challenge.title}
+                        {challenge.is_featured && (
+                          <Star className="h-4 w-4 text-warning fill-current" />
+                        )}
+                        {isCompleted && (
+                          <Check className="h-4 w-4 text-success" />
+                        )}
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getDifficultyBadgeVariant(challenge.difficulty_level)}>
+                          {challenge.difficulty_level}
+                        </Badge>
+                        {challenge.booktok_themed && (
+                          <Badge variant="secondary">BookTok</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <CardDescription className="line-clamp-3">
+                    {challenge.description}
+                  </CardDescription>
+
+                  {/* Challenge Details */}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Target className="h-4 w-4" />
+                        Goal: {challenge.target_value} {challenge.target_unit}
+                      </div>
+                      <div className="flex items-center gap-1 text-warning">
+                        <Star className="h-4 w-4" />
+                        {challenge.reward_points} pts
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        {challenge.participant_count} joined
+                      </div>
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        {daysLeft} days left
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Genres */}
+                  <div className="flex flex-wrap gap-1">
+                    {challenge.genres.map((genre) => (
+                      <Badge key={genre} variant="outline" className="text-xs">
+                        {genre === 'Romance' && <Heart className="h-3 w-3 mr-1" />}
+                        {(genre === 'Fantasy' || genre === 'Dragons') && <Zap className="h-3 w-3 mr-1" />}
+                        {genre}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  {/* Progress (if participating) */}
+                  {isParticipating && challenge.user_participation && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Your Progress</span>
+                        <span>{challenge.user_participation.progress_percentage}%</span>
+                      </div>
+                      <Progress value={challenge.user_participation.progress_percentage} className="h-2" />
+                      <p className="text-xs text-muted-foreground">
+                        {challenge.user_participation.progress_value} / {challenge.target_value} {challenge.target_unit}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action Button */}
+                  <div className="pt-2">
+                    {isCompleted ? (
+                      <Button className="w-full" disabled>
+                        <Check className="h-4 w-4 mr-2" />
+                        Completed! 🎉
+                      </Button>
+                    ) : isParticipating ? (
+                      <Button variant="outline" className="w-full">
+                        <Flame className="h-4 w-4 mr-2" />
+                        Continue Challenge
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => {
+                          if (!user) {
+                            toast({
+                              title: "Sign in required",
+                              description: "Please sign in to join challenges.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          joinChallengeMutation.mutate(challenge.id);
+                        }}
+                        disabled={joinChallengeMutation.isPending}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Join Challenge
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Create Custom Challenge CTA */}
+      <Card className="text-center">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold">Want to create your own challenge?</h3>
+              <p className="text-sm text-muted-foreground">
+                Premium users can create custom challenges for friends and book clubs
+              </p>
+            </div>
+            <Button variant="outline" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Upgrade to Premium
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
