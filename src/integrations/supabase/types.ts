@@ -19,7 +19,7 @@ export type Database = {
           achievement_type: string
           badge_color: string | null
           badge_icon: string | null
-          created_at: string
+          created_at: string | null
           description: string | null
           genres: string[] | null
           id: string
@@ -34,7 +34,7 @@ export type Database = {
           achievement_type: string
           badge_color?: string | null
           badge_icon?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           genres?: string[] | null
           id?: string
@@ -49,7 +49,7 @@ export type Database = {
           achievement_type?: string
           badge_color?: string | null
           badge_icon?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           genres?: string[] | null
           id?: string
@@ -66,39 +66,31 @@ export type Database = {
         Row: {
           club_id: string
           id: string
-          joined_at: string
+          joined_at: string | null
           role: string | null
           user_id: string
         }
         Insert: {
           club_id: string
           id?: string
-          joined_at?: string
+          joined_at?: string | null
           role?: string | null
           user_id: string
         }
         Update: {
           club_id?: string
           id?: string
-          joined_at?: string
+          joined_at?: string | null
           role?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "book_club_members_club_id_fkey"
-            columns: ["club_id"]
-            isOneToOne: false
-            referencedRelation: "book_clubs"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       book_clubs: {
         Row: {
           club_type: string | null
           cover_image_url: string | null
-          created_at: string
+          created_at: string | null
           created_by: string
           current_member_count: number | null
           description: string | null
@@ -108,12 +100,12 @@ export type Database = {
           name: string
           primary_genres: string[] | null
           reading_schedule: string | null
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           club_type?: string | null
           cover_image_url?: string | null
-          created_at?: string
+          created_at?: string | null
           created_by: string
           current_member_count?: number | null
           description?: string | null
@@ -123,12 +115,12 @@ export type Database = {
           name: string
           primary_genres?: string[] | null
           reading_schedule?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           club_type?: string | null
           cover_image_url?: string | null
-          created_at?: string
+          created_at?: string | null
           created_by?: string
           current_member_count?: number | null
           description?: string | null
@@ -138,17 +130,19 @@ export type Database = {
           name?: string
           primary_genres?: string[] | null
           reading_schedule?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
       books: {
         Row: {
+          amazon_url: string | null
+          audible_url: string | null
           authors: string[]
           average_rating: number | null
           booktok_tags: string[] | null
           cover_url: string | null
-          created_at: string
+          created_at: string | null
           description: string | null
           genres: string[] | null
           goodreads_id: string | null
@@ -159,17 +153,20 @@ export type Database = {
           isbn_13: string | null
           language: string | null
           page_count: number | null
+          preview_link: string | null
           published_date: string | null
           ratings_count: number | null
           title: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
+          amazon_url?: string | null
+          audible_url?: string | null
           authors: string[]
           average_rating?: number | null
           booktok_tags?: string[] | null
           cover_url?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           genres?: string[] | null
           goodreads_id?: string | null
@@ -180,17 +177,20 @@ export type Database = {
           isbn_13?: string | null
           language?: string | null
           page_count?: number | null
+          preview_link?: string | null
           published_date?: string | null
           ratings_count?: number | null
           title: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
+          amazon_url?: string | null
+          audible_url?: string | null
           authors?: string[]
           average_rating?: number | null
           booktok_tags?: string[] | null
           cover_url?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           genres?: string[] | null
           goodreads_id?: string | null
@@ -201,10 +201,11 @@ export type Database = {
           isbn_13?: string | null
           language?: string | null
           page_count?: number | null
+          preview_link?: string | null
           published_date?: string | null
           ratings_count?: number | null
           title?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -214,7 +215,7 @@ export type Database = {
           completed: boolean | null
           completion_date: string | null
           id: string
-          joined_at: string
+          joined_at: string | null
           progress_percentage: number | null
           progress_value: number | null
           user_id: string
@@ -224,7 +225,7 @@ export type Database = {
           completed?: boolean | null
           completion_date?: string | null
           id?: string
-          joined_at?: string
+          joined_at?: string | null
           progress_percentage?: number | null
           progress_value?: number | null
           user_id: string
@@ -234,26 +235,18 @@ export type Database = {
           completed?: boolean | null
           completion_date?: string | null
           id?: string
-          joined_at?: string
+          joined_at?: string | null
           progress_percentage?: number | null
           progress_value?: number | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "challenge_participants_challenge_id_fkey"
-            columns: ["challenge_id"]
-            isOneToOne: false
-            referencedRelation: "challenges"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       challenges: {
         Row: {
           booktok_themed: boolean | null
           challenge_type: string
-          created_at: string
+          created_at: string | null
           created_by: string | null
           description: string | null
           difficulty_level: string | null
@@ -268,12 +261,12 @@ export type Database = {
           target_unit: string
           target_value: number
           title: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           booktok_themed?: boolean | null
           challenge_type: string
-          created_at?: string
+          created_at?: string | null
           created_by?: string | null
           description?: string | null
           difficulty_level?: string | null
@@ -288,12 +281,12 @@ export type Database = {
           target_unit: string
           target_value: number
           title: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           booktok_themed?: boolean | null
           challenge_type?: string
-          created_at?: string
+          created_at?: string | null
           created_by?: string | null
           description?: string | null
           difficulty_level?: string | null
@@ -308,13 +301,13 @@ export type Database = {
           target_unit?: string
           target_value?: number
           title?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
       daily_quests: {
         Row: {
-          created_at: string
+          created_at: string | null
           description: string | null
           difficulty: string | null
           expires_at: string | null
@@ -327,7 +320,7 @@ export type Database = {
           title: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           difficulty?: string | null
           expires_at?: string | null
@@ -340,7 +333,7 @@ export type Database = {
           title: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           difficulty?: string | null
           expires_at?: string | null
@@ -356,19 +349,19 @@ export type Database = {
       }
       follows: {
         Row: {
-          created_at: string
+          created_at: string | null
           follower_id: string
           following_id: string
           id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           follower_id: string
           following_id: string
           id?: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           follower_id?: string
           following_id?: string
           id?: string
@@ -377,7 +370,7 @@ export type Database = {
       }
       leaderboards: {
         Row: {
-          calculated_at: string
+          calculated_at: string | null
           genre_filter: string | null
           id: string
           leaderboard_type: string
@@ -389,7 +382,7 @@ export type Database = {
           value: number
         }
         Insert: {
-          calculated_at?: string
+          calculated_at?: string | null
           genre_filter?: string | null
           id?: string
           leaderboard_type: string
@@ -401,7 +394,7 @@ export type Database = {
           value: number
         }
         Update: {
-          calculated_at?: string
+          calculated_at?: string | null
           genre_filter?: string | null
           id?: string
           leaderboard_type?: string
@@ -414,88 +407,98 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: string
+          is_read: boolean | null
+          message: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
-          created_at: string
+          created_at: string | null
           id: string
           likes_count: number | null
           parent_comment_id: string | null
           post_id: string
-          updated_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           content: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           likes_count?: number | null
           parent_comment_id?: string | null
           post_id: string
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           content?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           likes_count?: number | null
           parent_comment_id?: string | null
           post_id?: string
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "post_comments_parent_comment_id_fkey"
-            columns: ["parent_comment_id"]
-            isOneToOne: false
-            referencedRelation: "post_comments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "social_posts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       post_likes: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
           post_id: string
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           post_id: string
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           post_id?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "post_likes_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "social_posts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
           avatar_url: string | null
           bio: string | null
-          created_at: string
+          created_at: string | null
           current_streak: number | null
           display_name: string | null
           favorite_genres: string[] | null
@@ -505,20 +508,22 @@ export type Database = {
           longest_streak: number | null
           reading_goal_daily: number | null
           reading_goal_weekly: number | null
+          referral_code: string | null
+          referred_by: string | null
           subscription_end: string | null
           subscription_tier: string | null
           theme_preference: string | null
           total_books_read: number | null
           total_pages_read: number | null
           total_points: number | null
-          updated_at: string
+          updated_at: string | null
           user_id: string
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
-          created_at?: string
+          created_at?: string | null
           current_streak?: number | null
           display_name?: string | null
           favorite_genres?: string[] | null
@@ -528,20 +533,22 @@ export type Database = {
           longest_streak?: number | null
           reading_goal_daily?: number | null
           reading_goal_weekly?: number | null
+          referral_code?: string | null
+          referred_by?: string | null
           subscription_end?: string | null
           subscription_tier?: string | null
           theme_preference?: string | null
           total_books_read?: number | null
           total_pages_read?: number | null
           total_points?: number | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
-          created_at?: string
+          created_at?: string | null
           current_streak?: number | null
           display_name?: string | null
           favorite_genres?: string[] | null
@@ -551,15 +558,53 @@ export type Database = {
           longest_streak?: number | null
           reading_goal_daily?: number | null
           reading_goal_weekly?: number | null
+          referral_code?: string | null
+          referred_by?: string | null
           subscription_end?: string | null
           subscription_tier?: string | null
           theme_preference?: string | null
           total_books_read?: number | null
           total_pages_read?: number | null
           total_points?: number | null
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      reading_sessions: {
+        Row: {
+          book_id: string
+          created_at: string | null
+          end_time: string | null
+          id: string
+          minutes_read: number | null
+          pages_read: number | null
+          session_type: string | null
+          start_time: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          minutes_read?: number | null
+          pages_read?: number | null
+          session_type?: string | null
+          start_time: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          minutes_read?: number | null
+          pages_read?: number | null
+          session_type?: string | null
+          start_time?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -570,7 +615,7 @@ export type Database = {
           challenge_id: string | null
           comments_count: number | null
           content: string
-          created_at: string
+          created_at: string | null
           hashtags: string[] | null
           id: string
           image_url: string | null
@@ -578,7 +623,7 @@ export type Database = {
           is_pinned: boolean | null
           likes_count: number | null
           post_type: string
-          updated_at: string
+          updated_at: string | null
           user_id: string
           visibility: string | null
         }
@@ -588,7 +633,7 @@ export type Database = {
           challenge_id?: string | null
           comments_count?: number | null
           content: string
-          created_at?: string
+          created_at?: string | null
           hashtags?: string[] | null
           id?: string
           image_url?: string | null
@@ -596,7 +641,7 @@ export type Database = {
           is_pinned?: boolean | null
           likes_count?: number | null
           post_type: string
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
           visibility?: string | null
         }
@@ -606,7 +651,7 @@ export type Database = {
           challenge_id?: string | null
           comments_count?: number | null
           content?: string
-          created_at?: string
+          created_at?: string | null
           hashtags?: string[] | null
           id?: string
           image_url?: string | null
@@ -614,68 +659,80 @@ export type Database = {
           is_pinned?: boolean | null
           likes_count?: number | null
           post_type?: string
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
           visibility?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "social_posts_achievement_id_fkey"
-            columns: ["achievement_id"]
-            isOneToOne: false
-            referencedRelation: "achievements"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "social_posts_book_id_fkey"
-            columns: ["book_id"]
-            isOneToOne: false
-            referencedRelation: "books"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "social_posts_challenge_id_fkey"
-            columns: ["challenge_id"]
-            isOneToOne: false
-            referencedRelation: "challenges"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_type: string | null
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_achievements: {
         Row: {
           achievement_id: string
-          earned_at: string
+          earned_at: string | null
           id: string
           user_id: string
         }
         Insert: {
           achievement_id: string
-          earned_at?: string
+          earned_at?: string | null
           id?: string
           user_id: string
         }
         Update: {
           achievement_id?: string
-          earned_at?: string
+          earned_at?: string | null
           id?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_achievements_achievement_id_fkey"
-            columns: ["achievement_id"]
-            isOneToOne: false
-            referencedRelation: "achievements"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_books: {
         Row: {
           audiobook_minutes_listened: number | null
           book_id: string
-          created_at: string
+          created_at: string | null
           current_page: number | null
           end_date: string | null
           id: string
@@ -686,15 +743,15 @@ export type Database = {
           progress_percentage: number | null
           reading_time_minutes: number | null
           start_date: string | null
-          status: string
+          status: string | null
           total_pages: number | null
-          updated_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           audiobook_minutes_listened?: number | null
           book_id: string
-          created_at?: string
+          created_at?: string | null
           current_page?: number | null
           end_date?: string | null
           id?: string
@@ -705,15 +762,15 @@ export type Database = {
           progress_percentage?: number | null
           reading_time_minutes?: number | null
           start_date?: string | null
-          status?: string
+          status?: string | null
           total_pages?: number | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           audiobook_minutes_listened?: number | null
           book_id?: string
-          created_at?: string
+          created_at?: string | null
           current_page?: number | null
           end_date?: string | null
           id?: string
@@ -724,61 +781,45 @@ export type Database = {
           progress_percentage?: number | null
           reading_time_minutes?: number | null
           start_date?: string | null
-          status?: string
+          status?: string | null
           total_pages?: number | null
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_books_book_id_fkey"
-            columns: ["book_id"]
-            isOneToOne: false
-            referencedRelation: "books"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_quest_progress: {
         Row: {
           completed: boolean | null
           completion_date: string | null
-          created_at: string
+          created_at: string | null
           id: string
           progress_value: number | null
-          quest_date: string
+          quest_date: string | null
           quest_id: string
           user_id: string
         }
         Insert: {
           completed?: boolean | null
           completion_date?: string | null
-          created_at?: string
+          created_at?: string | null
           id?: string
           progress_value?: number | null
-          quest_date?: string
+          quest_date?: string | null
           quest_id: string
           user_id: string
         }
         Update: {
           completed?: boolean | null
           completion_date?: string | null
-          created_at?: string
+          created_at?: string | null
           id?: string
           progress_value?: number | null
-          quest_date?: string
+          quest_date?: string | null
           quest_id?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_quest_progress_quest_id_fkey"
-            columns: ["quest_id"]
-            isOneToOne: false
-            referencedRelation: "daily_quests"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
