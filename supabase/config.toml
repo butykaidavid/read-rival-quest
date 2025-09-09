@@ -1,1 +1,10 @@
 project_id = "ibnnrymvynbtpdqrlckz"
+
+[functions.create-subscription]
+verify_jwt = true
+
+[functions.google-books-search]  
+verify_jwt = true
+
+[functions.ai-recommendations]
+verify_jwt = true

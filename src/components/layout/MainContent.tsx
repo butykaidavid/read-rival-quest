@@ -5,7 +5,7 @@ import { BookSearch } from '@/components/books/BookSearch';
 import { ChallengesHub } from '@/components/challenges/ChallengesHub';
 import { Leaderboards } from '@/components/leaderboards/Leaderboards';
 import { SocialFeed } from '@/components/social/SocialFeed';
-import { Dashboard } from '@/components/dashboard/Dashboard';
+import EnhancedDashboard from '@/components/dashboard/EnhancedDashboard';
 
 interface NavigationItem {
   path: string;
@@ -19,7 +19,7 @@ const navigationItems: NavigationItem[] = [
     path: '/',
     label: 'Dashboard',
     icon: TrendingUp,
-    component: Dashboard,
+    component: EnhancedDashboard,
   },
   {
     path: '/books',

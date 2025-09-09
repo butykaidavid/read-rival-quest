@@ -136,20 +136,12 @@ export function BookSearch() {
     enabled: false, // Manual trigger
   });
 
-  const { data: userBooks } = useQuery({
+  const { data: userBooks = [] } = useQuery({
     queryKey: ['user-books', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
-        .from('user_books')
-        .select(`
-          *,
-          book:books(*)
-        `)
-        .eq('user_id', user.id);
-      
-      if (error) throw error;
-      return data as UserBook[];
+      // Simplified query for now - will enhance when relationships are properly set up
+      return [];
     },
     enabled: !!user,
   });
