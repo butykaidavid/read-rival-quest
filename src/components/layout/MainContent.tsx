@@ -65,15 +65,33 @@ export function MainContent() {
         <div className="space-y-4">
           <h3 className="font-semibold">Quick Actions</h3>
           <div className="space-y-2">
-            <Button variant="outline" className="w-full justify-start gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start gap-2"
+              onClick={() => {
+                window.location.href = '/books';
+              }}
+            >
               <Search className="h-4 w-4" />
               Search Books
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start gap-2"
+              onClick={() => {
+                window.location.href = '/challenges';
+              }}
+            >
               <Plus className="h-4 w-4" />
               Join Challenge
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start gap-2"
+              onClick={() => {
+                window.location.href = '/community';
+              }}
+            >
               <Users className="h-4 w-4" />
               Find Friends
             </Button>

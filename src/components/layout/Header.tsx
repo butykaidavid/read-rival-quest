@@ -89,7 +89,7 @@ export function Header() {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
+              <DropdownMenuContent className="w-56 bg-popover/95 backdrop-blur-sm border z-50" align="end">
                 <DropdownMenuLabel className="flex flex-col">
                   <span>{user.user_metadata?.display_name || 'Reader'}</span>
                   <span className="text-xs text-muted-foreground">{user.email}</span>
