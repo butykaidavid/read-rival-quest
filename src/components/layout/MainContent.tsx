@@ -8,6 +8,7 @@ import { ChallengesHub } from '@/components/challenges/ChallengesHub';
 import { Leaderboards } from '@/components/leaderboards/Leaderboards';
 import { SocialFeed } from '@/components/social/SocialFeed';
 import EnhancedDashboard from '@/components/dashboard/EnhancedDashboard';
+import { MobileNavigation } from '@/components/layout/MobileNavigation';
 
 interface NavigationItem {
   path: string;
@@ -18,7 +19,7 @@ interface NavigationItem {
 
 const navigationItems: NavigationItem[] = [
   {
-    path: '/',
+    path: '/dashboard',
     label: 'Dashboard',
     icon: TrendingUp,
     component: EnhancedDashboard,
@@ -54,8 +55,9 @@ export function MainContent() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Find current component based on location
-  const currentItem = navigationItems.find(item => item.path === location.pathname) || navigationItems[0];
+  // Handle both / and /dashboard as dashboard routes
+  const currentPath = location.pathname === '/' ? '/dashboard' : location.pathname;
+  const currentItem = navigationItems.find(item => item.path === currentPath) || navigationItems[0];
   const CurrentComponent = currentItem.component;
 
   const handleQuickNavigation = (path: string) => {
@@ -171,7 +173,7 @@ export function MainContent() {
   );
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)]">
+    <div className="flex min-h-[calc(100vh-4rem)] pb-16 md:pb-0">
       {/* Main Content Area */}
       <div className="flex-1 p-4 md:p-6">
         {/* Mobile menu button */}
@@ -183,19 +185,30 @@ export function MainContent() {
                 Menu
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80 p-6">
+            <SheetContent side="right" className="w-80 p-6 z-50">
               <SidebarContent />
             </SheetContent>
           </Sheet>
         </div>
         
-        <CurrentComponent />
+        <Routes>
+          <Route path="/" element={<EnhancedDashboard />} />
+          <Route path="/dashboard" element={<EnhancedDashboard />} />
+          <Route path="/books" element={<BookSearch />} />
+          <Route path="/challenges" element={<ChallengesHub />} />
+          <Route path="/leaderboards" element={<Leaderboards />} />
+          <Route path="/community" element={<SocialFeed />} />
+          <Route path="*" element={<EnhancedDashboard />} />
+        </Routes>
       </div>
 
       {/* Desktop Right Sidebar */}
       <div className="hidden md:block w-80 p-6 border-l bg-muted/20">
         <SidebarContent />
       </div>
+
+      {/* Mobile Navigation */}
+      <MobileNavigation />
     </div>
   );
 }

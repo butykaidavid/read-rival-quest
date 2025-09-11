@@ -22,7 +22,7 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
-  { path: '/', label: 'Dashboard', icon: TrendingUp },
+  { path: '/dashboard', label: 'Dashboard', icon: TrendingUp },
   { path: '/books', label: 'Books', icon: BookOpen },
   { path: '/challenges', label: 'Challenges', icon: Trophy },
   { path: '/leaderboards', label: 'Leaderboards', icon: Target },
@@ -48,18 +48,21 @@ export function Header() {
           
           {user && (
             <nav className="hidden md:flex items-center gap-1">
-              {navigationItems.map(({ path, label, icon: Icon }) => (
-                <Link key={path} to={path}>
-                  <Button 
-                    variant={location.pathname === path ? 'default' : 'ghost'} 
-                    size="sm" 
-                    className="gap-2"
-                  >
-                    <Icon className="h-4 w-4" />
-                    {label}
-                  </Button>
-                </Link>
-              ))}
+              {navigationItems.map(({ path, label, icon: Icon }) => {
+                const isActive = location.pathname === path || (path === '/dashboard' && location.pathname === '/');
+                return (
+                  <Link key={path} to={path}>
+                    <Button 
+                      variant={isActive ? 'default' : 'ghost'} 
+                      size="sm" 
+                      className="gap-2"
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </Button>
+                  </Link>
+                );
+              })}
             </nav>
           )}
         </div>
@@ -124,12 +127,16 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm">
-                Sign In
-              </Button>
-              <Button size="sm">
-                Join Now
-              </Button>
+              <Link to="/auth">
+                <Button variant="ghost" size="sm">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button size="sm">
+                  Join Now
+                </Button>
+              </Link>
             </div>
           )}
         </div>
