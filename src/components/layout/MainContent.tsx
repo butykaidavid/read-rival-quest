@@ -7,7 +7,7 @@ import { BookSearch } from '@/components/books/BookSearch';
 import { ChallengesHub } from '@/components/challenges/ChallengesHub';
 import { Leaderboards } from '@/components/leaderboards/Leaderboards';
 import { SocialFeed } from '@/components/social/SocialFeed';
-import EnhancedDashboard from '@/components/dashboard/EnhancedDashboard';
+import { RealDashboard } from '@/components/dashboard/RealDashboard';
 import { MobileNavigation } from '@/components/layout/MobileNavigation';
 
 interface NavigationItem {
@@ -22,7 +22,7 @@ const navigationItems: NavigationItem[] = [
     path: '/dashboard',
     label: 'Dashboard',
     icon: TrendingUp,
-    component: EnhancedDashboard,
+    component: RealDashboard,
   },
   {
     path: '/books',
@@ -192,13 +192,13 @@ export function MainContent() {
         </div>
         
         <Routes>
-          <Route path="/" element={<EnhancedDashboard />} />
-          <Route path="/dashboard" element={<EnhancedDashboard />} />
+          <Route path="/" element={<RealDashboard />} />
+          <Route path="/dashboard" element={<RealDashboard />} />
           <Route path="/books" element={<BookSearch />} />
           <Route path="/challenges" element={<ChallengesHub />} />
           <Route path="/leaderboards" element={<Leaderboards />} />
           <Route path="/community" element={<SocialFeed />} />
-          <Route path="*" element={<EnhancedDashboard />} />
+          <Route path="*" element={<RealDashboard />} />
         </Routes>
       </div>
 

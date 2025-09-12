@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: metadata,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
 
@@ -84,6 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       title: "Welcome back!",
       description: "You've successfully signed in to ReadRival.",
     });
+    
+    // Redirect to dashboard after successful login
+    window.location.href = '/dashboard';
   };
 
   const signOut = async () => {

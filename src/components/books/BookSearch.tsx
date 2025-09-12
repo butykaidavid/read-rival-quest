@@ -52,75 +52,42 @@ interface UserBook {
   book: Book;
 }
 
-// Mock Google Books API function (replace with real API)
+// Real Google Books API function
 const searchBooks = async (query: string, genre?: string): Promise<Book[]> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Mock data with popular romance/fantasy books
-  const mockBooks: Book[] = [
-    {
-      id: '1',
-      title: 'Fourth Wing',
-      authors: ['Rebecca Yarros'],
-      description: 'Enter the brutal and elite world of a war college for dragon riders...',
-      cover_url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&h=450&fit=crop',
-      page_count: 500,
-      published_date: '2023-05-02',
-      genres: ['Fantasy', 'Romance', 'Dragons'],
-      average_rating: 4.6,
-      is_trending: true
-    },
-    {
-      id: '2',
-      title: 'The Seven Husbands of Evelyn Hugo',
-      authors: ['Taylor Jenkins Reid'],
-      description: 'A reclusive Hollywood icon finally tells her story...',
-      cover_url: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=300&h=450&fit=crop',
-      page_count: 400,
-      published_date: '2017-06-13',
-      genres: ['Romance', 'Historical Fiction'],
-      average_rating: 4.5,
-      is_trending: true
-    },
-    {
-      id: '3',
-      title: 'Iron Flame',
-      authors: ['Rebecca Yarros'],
-      description: 'The sequel to Fourth Wing continues the dragon rider saga...',
-      cover_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=450&fit=crop',
-      page_count: 623,
-      published_date: '2023-11-07',
-      genres: ['Fantasy', 'Romance', 'Dragons'],
-      average_rating: 4.7,
-      is_trending: true
-    },
-    {
-      id: '4',
-      title: 'A Court of Thorns and Roses',
-      authors: ['Sarah J. Maas'],
-      description: 'A thrilling retelling of Beauty and the Beast in a fantasy world...',
-      cover_url: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=450&fit=crop',
-      page_count: 419,
-      published_date: '2015-05-05',
-      genres: ['Fantasy', 'Romance', 'Fae'],
-      average_rating: 4.3,
-      is_trending: false
-    }
-  ];
+  try {
+    const { data, error } = await supabase.functions.invoke('google-books-search', {
+      body: {
+        query,
+        filter: genre?.toLowerCase(),
+        maxResults: 20,
+        startIndex: 0,
+      },
+    });
 
-  // Filter by query and genre
-  return mockBooks.filter(book => {
-    const matchesQuery = query === '' || 
-      book.title.toLowerCase().includes(query.toLowerCase()) ||
-      book.authors.some(author => author.toLowerCase().includes(query.toLowerCase()));
-    
-    const matchesGenre = !genre || book.genres?.some(g => 
-      g.toLowerCase().includes(genre.toLowerCase())
-    );
-    
-    return matchesQuery && matchesGenre;
-  });
+    if (error) {
+      console.error('Google Books API error:', error);
+      throw new Error('Failed to search books');
+    }
+
+    // Map the response to our Book interface
+    return data.books.map((book: any) => ({
+      id: book.google_books_id || book.id,
+      title: book.title,
+      authors: book.authors || ['Unknown Author'],
+      description: book.description,
+      cover_url: book.cover_url,
+      page_count: book.page_count,
+      published_date: book.published_date,
+      genres: book.genres || [],
+      isbn_13: book.isbn_13,
+      isbn_10: book.isbn_10,
+      average_rating: book.average_rating || 0,
+      is_trending: book.is_trending || false,
+    }));
+  } catch (error) {
+    console.error('Search books error:', error);
+    throw error;
+  }
 };
 
 export function BookSearch() {
@@ -134,14 +101,28 @@ export function BookSearch() {
     queryKey: ['book-search', searchQuery, selectedGenre],
     queryFn: () => searchBooks(searchQuery, selectedGenre),
     enabled: false, // Manual trigger
+    retry: 1,
   });
 
   const { data: userBooks = [] } = useQuery({
     queryKey: ['user-books', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      // Simplified query for now - will enhance when relationships are properly set up
-      return [];
+      
+      const { data, error } = await supabase
+        .from('user_books')
+        .select(`
+          *,
+          books!inner(*)
+        `)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching user books:', error);
+        return [];
+      }
+
+      return data || [];
     },
     enabled: !!user,
   });
@@ -203,10 +184,8 @@ export function BookSearch() {
         description: `${book.title} has been added to your library.`,
       });
 
-      // Refetch user books
-      if (userBooks) {
-        // Manual refresh would go here
-      }
+      // Refetch user books to update the UI
+      window.location.reload();
     } catch (error) {
       console.error('Error adding book:', error);
       toast({
@@ -218,7 +197,7 @@ export function BookSearch() {
   };
 
   const isBookInLibrary = (bookId: string) => {
-    return userBooks?.some(ub => ub.book_id === bookId);
+    return userBooks?.some((ub: any) => ub.book_id === bookId);
   };
 
   const genres = ['Romance', 'Fantasy', 'Dragons', 'Fae', 'Historical Fiction', 'BookTok'];
