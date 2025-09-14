@@ -50,83 +50,6 @@ interface Challenge {
   };
 }
 
-const mockChallenges: Challenge[] = [
-  {
-    id: '1',
-    title: 'Dragon Fantasy Marathon',
-    description: 'Read 5 dragon-themed fantasy books this month. Perfect for fans of Fourth Wing and Iron Flame!',
-    challenge_type: 'books_read',
-    target_value: 5,
-    target_unit: 'books',
-    start_date: new Date().toISOString(),
-    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    reward_points: 500,
-    difficulty_level: 'hard',
-    genres: ['Fantasy', 'Dragons'],
-    booktok_themed: true,
-    is_featured: true,
-    is_public: true,
-    max_participants: 1000,
-    created_at: new Date().toISOString(),
-    participant_count: 234,
-  },
-  {
-    id: '2',
-    title: 'Romance Reading Sprint',
-    description: 'Read 1000 pages of romance novels in 30 days. Love triangles and enemies-to-lovers count double!',
-    challenge_type: 'pages_read',
-    target_value: 1000,
-    target_unit: 'pages',
-    start_date: new Date().toISOString(),
-    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    reward_points: 300,
-    difficulty_level: 'medium',
-    genres: ['Romance'],
-    booktok_themed: true,
-    is_featured: true,
-    is_public: true,
-    max_participants: 500,
-    created_at: new Date().toISOString(),
-    participant_count: 456,
-  },
-  {
-    id: '3',
-    title: 'BookTok Viral Reads',
-    description: 'Complete 3 trending BookTok books. Stay up-to-date with the latest viral reads!',
-    challenge_type: 'books_read',
-    target_value: 3,
-    target_unit: 'books',
-    start_date: new Date().toISOString(),
-    end_date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
-    reward_points: 200,
-    difficulty_level: 'easy',
-    genres: ['Romance', 'Fantasy'],
-    booktok_themed: true,
-    is_featured: false,
-    is_public: true,
-    max_participants: 2000,
-    created_at: new Date().toISOString(),
-    participant_count: 789,
-  },
-  {
-    id: '4',
-    title: 'Spicy Romance Challenge',
-    description: 'Read 7 steamy romance novels. Perfect for fans of dark romance and enemies-to-lovers!',
-    challenge_type: 'books_read',
-    target_value: 7,
-    target_unit: 'books',
-    start_date: new Date().toISOString(),
-    end_date: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
-    reward_points: 400,
-    difficulty_level: 'medium',
-    genres: ['Romance'],
-    booktok_themed: true,
-    is_featured: true,
-    is_public: true,
-    created_at: new Date().toISOString(),
-    participant_count: 345,
-  }
-];
 
 export function ChallengesHub() {
   const [filter, setFilter] = useState<'all' | 'featured' | 'romance' | 'fantasy'>('all');
@@ -138,27 +61,54 @@ export function ChallengesHub() {
   const { data: challenges, isLoading } = useQuery({
     queryKey: ['challenges', filter],
     queryFn: async () => {
-      // For now, return mock data. In real app, this would fetch from Supabase
-      let filtered = mockChallenges;
-      
+      let query = supabase
+        .from('challenges')
+        .select('*')
+        .eq('is_public', true)
+        .order('is_featured', { ascending: false })
+        .order('created_at', { ascending: false });
+
       if (filter === 'featured') {
-        filtered = filtered.filter(c => c.is_featured);
+        query = query.eq('is_featured', true);
       } else if (filter === 'romance') {
-        filtered = filtered.filter(c => c.genres.includes('Romance'));
+        query = query.contains('genres', ['romance']);
       } else if (filter === 'fantasy') {
-        filtered = filtered.filter(c => c.genres.includes('Fantasy') || c.genres.includes('Dragons'));
+        query = query.contains('genres', ['fantasy']);
       }
-      
-      // Simulate user participation data
-      return filtered.map(challenge => ({
-        ...challenge,
-        user_participation: Math.random() > 0.7 ? {
-          progress_value: Math.floor(Math.random() * challenge.target_value),
-          progress_percentage: Math.floor(Math.random() * 100),
-          completed: Math.random() > 0.8,
-          completion_date: Math.random() > 0.8 ? new Date().toISOString() : undefined,
-        } : undefined,
-      }));
+
+      const { data, error } = await query;
+      if (error) {
+        console.error('Error fetching challenges:', error);
+        throw error;
+      }
+
+      // Get user participation data separately if user is logged in
+      let userParticipations: any[] = [];
+      if (user && data) {
+        const challengeIds = data.map(c => c.id);
+        const { data: participationData } = await supabase
+          .from('challenge_participants')
+          .select('*')
+          .eq('user_id', user.id)
+          .in('challenge_id', challengeIds);
+        
+        userParticipations = participationData || [];
+      }
+
+      return data?.map(challenge => {
+        const userParticipation = userParticipations.find(p => p.challenge_id === challenge.id);
+        
+        return {
+          ...challenge,
+          participant_count: Math.floor(Math.random() * 2000) + 100, // Mock participant count for now
+          user_participation: userParticipation ? {
+            progress_value: userParticipation.progress_value,
+            progress_percentage: userParticipation.progress_percentage,
+            completed: userParticipation.completed,
+            completion_date: userParticipation.completion_date
+          } : undefined
+        };
+      }) || [];
     }
   });
 
@@ -166,7 +116,18 @@ export function ChallengesHub() {
     mutationFn: async (challengeId: string) => {
       if (!user) throw new Error('User not authenticated');
       
-      // In real app, this would call Supabase
+      // Check if already participating
+      const { data: existing } = await supabase
+        .from('challenge_participants')
+        .select('id')
+        .eq('challenge_id', challengeId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existing) {
+        throw new Error('Already participating in this challenge');
+      }
+
       const { error } = await supabase
         .from('challenge_participants')
         .insert({
@@ -177,7 +138,10 @@ export function ChallengesHub() {
           completed: false,
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Join challenge error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       setShowConfetti(true);

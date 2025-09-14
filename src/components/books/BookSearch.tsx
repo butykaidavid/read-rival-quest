@@ -52,9 +52,10 @@ interface UserBook {
   book: Book;
 }
 
-// Real Google Books API function
 const searchBooks = async (query: string, genre?: string): Promise<Book[]> => {
   try {
+    console.log('Searching for books:', query, genre);
+    
     const { data, error } = await supabase.functions.invoke('google-books-search', {
       body: {
         query,
@@ -66,11 +67,31 @@ const searchBooks = async (query: string, genre?: string): Promise<Book[]> => {
 
     if (error) {
       console.error('Google Books API error:', error);
-      throw new Error('Failed to search books');
+      // If API fails, return books from database as fallback
+      const { data: fallbackBooks } = await supabase
+        .from('books')
+        .select('*')
+        .ilike('title', `%${query}%`)
+        .limit(10);
+      
+      return fallbackBooks?.map(book => ({
+        id: book.id,
+        title: book.title,
+        authors: book.authors || ['Unknown Author'],
+        description: book.description,
+        cover_url: book.cover_url,
+        page_count: book.page_count,
+        published_date: book.published_date,
+        genres: book.genres || [],
+        isbn_13: book.isbn_13,
+        isbn_10: book.isbn_10,
+        average_rating: book.average_rating || 0,
+        is_trending: book.is_trending || false,
+      })) || [];
     }
 
     // Map the response to our Book interface
-    return data.books.map((book: any) => ({
+    return data.books?.map((book: any) => ({
       id: book.google_books_id || book.id,
       title: book.title,
       authors: book.authors || ['Unknown Author'],
@@ -83,10 +104,31 @@ const searchBooks = async (query: string, genre?: string): Promise<Book[]> => {
       isbn_10: book.isbn_10,
       average_rating: book.average_rating || 0,
       is_trending: book.is_trending || false,
-    }));
+    })) || [];
   } catch (error) {
     console.error('Search books error:', error);
-    throw error;
+    
+    // If API fails completely, return books from database as fallback
+    const { data: fallbackBooks } = await supabase
+      .from('books')
+      .select('*')
+      .ilike('title', `%${query}%`)
+      .limit(10);
+    
+    return fallbackBooks?.map(book => ({
+      id: book.id,
+      title: book.title,
+      authors: book.authors || ['Unknown Author'],
+      description: book.description,
+      cover_url: book.cover_url,
+      page_count: book.page_count,
+      published_date: book.published_date,
+      genres: book.genres || [],
+      isbn_13: book.isbn_13,
+      isbn_10: book.isbn_10,
+      average_rating: book.average_rating || 0,
+      is_trending: book.is_trending || false,
+    })) || [];
   }
 };
 
