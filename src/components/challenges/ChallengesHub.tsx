@@ -50,7 +50,6 @@ interface Challenge {
   };
 }
 
-
 export function ChallengesHub() {
   const [filter, setFilter] = useState<'all' | 'featured' | 'romance' | 'fantasy'>('all');
   const [showConfetti, setShowConfetti] = useState(false);
@@ -76,39 +75,29 @@ export function ChallengesHub() {
         query = query.contains('genres', ['fantasy']);
       }
 
-      const { data, error } = await query;
+      const { data: challengesData, error } = await query;
       if (error) {
         console.error('Error fetching challenges:', error);
         throw error;
       }
 
       // Get user participation data separately if user is logged in
-      let userParticipations: any[] = [];
-      if (user && data) {
-        const challengeIds = data.map(c => c.id);
-        const { data: participationData } = await supabase
+      let participationData: any[] = [];
+      if (user && challengesData) {
+        const { data: participations } = await supabase
           .from('challenge_participants')
           .select('*')
           .eq('user_id', user.id)
-          .in('challenge_id', challengeIds);
+          .in('challenge_id', challengesData.map(c => c.id));
         
-        userParticipations = participationData || [];
+        participationData = participations || [];
       }
 
-      return data?.map(challenge => {
-        const userParticipation = userParticipations.find(p => p.challenge_id === challenge.id);
-        
-        return {
-          ...challenge,
-          participant_count: Math.floor(Math.random() * 2000) + 100, // Mock participant count for now
-          user_participation: userParticipation ? {
-            progress_value: userParticipation.progress_value,
-            progress_percentage: userParticipation.progress_percentage,
-            completed: userParticipation.completed,
-            completion_date: userParticipation.completion_date
-          } : undefined
-        };
-      }) || [];
+      return challengesData?.map(challenge => ({
+        ...challenge,
+        participant_count: Math.floor(Math.random() * 2000) + 100, // Mock for now
+        user_participation: participationData.find((p: any) => p.challenge_id === challenge.id)
+      })) || [];
     }
   });
 
@@ -127,7 +116,7 @@ export function ChallengesHub() {
       if (existing) {
         throw new Error('Already participating in this challenge');
       }
-
+      
       const { error } = await supabase
         .from('challenge_participants')
         .insert({
@@ -138,10 +127,7 @@ export function ChallengesHub() {
           completed: false,
         });
       
-      if (error) {
-        console.error('Join challenge error:', error);
-        throw error;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       setShowConfetti(true);
@@ -259,7 +245,7 @@ export function ChallengesHub() {
                         )}
                       </CardTitle>
                       <div className="flex items-center gap-2">
-                        <Badge variant={getDifficultyBadgeVariant(challenge.difficulty_level)}>
+                        <Badge variant={getDifficultyBadgeVariant(challenge.difficulty_level) as any}>
                           {challenge.difficulty_level}
                         </Badge>
                         {challenge.booktok_themed && (
@@ -302,8 +288,8 @@ export function ChallengesHub() {
                   <div className="flex flex-wrap gap-1">
                     {challenge.genres.map((genre) => (
                       <Badge key={genre} variant="outline" className="text-xs">
-                        {genre === 'Romance' && <Heart className="h-3 w-3 mr-1" />}
-                        {(genre === 'Fantasy' || genre === 'Dragons') && <Zap className="h-3 w-3 mr-1" />}
+                        {genre === 'romance' && <Heart className="h-3 w-3 mr-1" />}
+                        {genre === 'fantasy' && <Zap className="h-3 w-3 mr-1" />}
                         {genre}
                       </Badge>
                     ))}

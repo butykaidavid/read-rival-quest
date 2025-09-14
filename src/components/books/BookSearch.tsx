@@ -52,30 +52,26 @@ interface UserBook {
   book: Book;
 }
 
+// Enhanced search function with fallback
 const searchBooks = async (query: string, genre?: string): Promise<Book[]> => {
   try {
-    console.log('Searching for books:', query, genre);
-    
+    // First try the Google Books API
     const { data, error } = await supabase.functions.invoke('google-books-search', {
-      body: {
+      body: { 
         query,
-        filter: genre?.toLowerCase(),
         maxResults: 20,
-        startIndex: 0,
-      },
+        filter: genre 
+      }
     });
 
     if (error) {
       console.error('Google Books API error:', error);
-      // If API fails, return books from database as fallback
-      const { data: fallbackBooks } = await supabase
-        .from('books')
-        .select('*')
-        .ilike('title', `%${query}%`)
-        .limit(10);
-      
-      return fallbackBooks?.map(book => ({
-        id: book.id,
+      throw new Error('Google Books API failed');
+    }
+
+    if (data?.books && data.books.length > 0) {
+      return data.books.map((book: any) => ({
+        id: book.google_books_id || book.id,
         title: book.title,
         authors: book.authors || ['Unknown Author'],
         description: book.description,
@@ -87,32 +83,18 @@ const searchBooks = async (query: string, genre?: string): Promise<Book[]> => {
         isbn_10: book.isbn_10,
         average_rating: book.average_rating || 0,
         is_trending: book.is_trending || false,
-      })) || [];
+      }));
     }
 
-    // Map the response to our Book interface
-    return data.books?.map((book: any) => ({
-      id: book.google_books_id || book.id,
-      title: book.title,
-      authors: book.authors || ['Unknown Author'],
-      description: book.description,
-      cover_url: book.cover_url,
-      page_count: book.page_count,
-      published_date: book.published_date,
-      genres: book.genres || [],
-      isbn_13: book.isbn_13,
-      isbn_10: book.isbn_10,
-      average_rating: book.average_rating || 0,
-      is_trending: book.is_trending || false,
-    })) || [];
+    throw new Error('No results from Google Books API');
   } catch (error) {
-    console.error('Search books error:', error);
+    console.error('Google Books API failed, using database fallback:', error);
     
-    // If API fails completely, return books from database as fallback
+    // Fallback to database search
     const { data: fallbackBooks } = await supabase
       .from('books')
       .select('*')
-      .ilike('title', `%${query}%`)
+      .or(`title.ilike.%${query}%,authors.cs.{${query}}`)
       .limit(10);
     
     return fallbackBooks?.map(book => ({
@@ -169,10 +151,46 @@ export function BookSearch() {
     enabled: !!user,
   });
 
+  const { data: trendingBooks = [] } = useQuery({
+    queryKey: ['trending-books'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('books')
+        .select('*')
+        .eq('is_trending', true)
+        .limit(6);
+
+      if (error) {
+        console.error('Error fetching trending books:', error);
+        return [];
+      }
+
+      return data || [];
+    },
+  });
+
   const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      toast({
+        title: "Search query required",
+        description: "Please enter a book title, author, or keyword to search.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSearching(true);
-    await refetch();
-    setIsSearching(false);
+    try {
+      await refetch();
+    } catch (error) {
+      toast({
+        title: "Search failed",
+        description: "Unable to search for books. Please check your connection and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const addBookToLibrary = async (book: Book, status: UserBook['status'] = 'want_to_read') => {
@@ -262,7 +280,7 @@ export function BookSearch() {
             Search Books
           </CardTitle>
           <CardDescription>
-            Find books by title, author, or ISBN
+            Find books by title, author, or ISBN. If the Google Books API is unavailable, we'll search our database.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -314,7 +332,7 @@ export function BookSearch() {
         </CardContent>
       </Card>
 
-      {/* Search Results */}
+      {/* Loading State */}
       {(isLoading || isSearching) && (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -322,6 +340,7 @@ export function BookSearch() {
         </div>
       )}
 
+      {/* Search Results */}
       {searchResults && searchResults.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">
@@ -404,12 +423,13 @@ export function BookSearch() {
         </div>
       )}
 
+      {/* No Results */}
       {searchResults && searchResults.length === 0 && !isLoading && (
         <div className="text-center py-8">
           <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No books found</h3>
           <p className="text-muted-foreground">
-            Try adjusting your search terms or genre filters
+            Try adjusting your search terms or genre filters. Our Google Books API may be temporarily unavailable.
           </p>
         </div>
       )}
@@ -422,22 +442,46 @@ export function BookSearch() {
             Trending on BookTok
           </CardTitle>
           <CardDescription>
-            Popular romance and fantasy books everyone's reading
+            Popular romance and fantasy books from our database
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setSearchQuery('');
-              setSelectedGenre('');
-              handleSearch();
-            }}
-            className="w-full"
-          >
-            <Heart className="h-4 w-4 mr-2" />
-            Discover Trending Books
-          </Button>
+          {trendingBooks.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {trendingBooks.slice(0, 6).map((book) => (
+                <div key={book.id} className="text-center space-y-2">
+                  <div className="aspect-[3/4] relative">
+                    <img
+                      src={book.cover_url || '/placeholder.svg'}
+                      alt={book.title}
+                      className="w-full h-full object-cover rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-sm line-clamp-1">{book.title}</h4>
+                    <p className="text-xs text-muted-foreground line-clamp-1">
+                      {book.authors?.join(', ')}
+                    </p>
+                  </div>
+                  {!isBookInLibrary(book.id) && (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => addBookToLibrary(book, 'want_to_read')}
+                      className="w-full"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No trending books available at the moment.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
